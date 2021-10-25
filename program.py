@@ -3,7 +3,7 @@
 
 # # Operation PS5
 
-# In[1]:
+# In[25]:
 
 
 from selenium import webdriver
@@ -19,26 +19,31 @@ import time
 import _thread as thread
 
 import os
+import platform
+
 import smtplib
 from email.message import EmailMessage as EmailMessage
 
 import logging as log
 
 
-# In[2]:
+# In[26]:
 
 
 #Configuring Logging
 log.basicConfig(format='%(asctime)s => %(levelname)s => %(funcName)s => %(message)s', filename='log.log', level=log.INFO)
 
 #Constants
+isWindows = 'windows' in platform.platform().lower() 
+DRIVER_FILE_NAME = 'chromedriver.exe' if isWindows else '/usr/lib/chromium-browser/chromedriver'
+DRIVER_FILE_PATH = os.path.join(os.getcwd(), DRIVER_FILE_NAME)
+
 EMAIL_ADDRESS = os.environ.get('G_USE')
 PASSWORD = os.environ.get('G_PASS')
 
 BESTBUY_STORE = 'best_buy'
 BESTBUY_PS5 = {'store': BESTBUY_STORE, 'product': 'Playstation 5', 'url': 'https://www.bestbuy.com/site/playstation-5/ps5-consoles/pcmcat1587395025973.c?id=pcmcat1587395025973'}
 BESTBUY_XBOX_X = {'store': BESTBUY_STORE,'product' : 'Xbox X', 'url' : 'https://www.bestbuy.com/site/searchpage.jsp?_dyncharset=UTF-8&browsedCategory=pcmcat1586900952752&id=pcat17071&iht=n&ks=960&list=y&qp=modelfamily_facet%3DModel%20Family~Xbox%20Series%20X&sc=Global&st=categoryid%24pcmcat1586900952752&type=page&usc=All%20Categories'} 
-
 
 # In[3]:
 
@@ -200,7 +205,7 @@ def processListingData(listings: list):
 def getDriver(driver = None):
     if driver is None:
         try:
-            driver = webdriver.Chrome(executable_path="chromedriver.exe")
+            driver = webdriver.Chrome(executable_path=DRIVER_FILE_PATH)
 
         except BaseException as err:
             log.error(f'Unable to stand up new driver => {err.args[0]}')
@@ -275,12 +280,6 @@ def runScrapForSearchUrl(storeInfoDict):
 searchDict = [BESTBUY_PS5,BESTBUY_XBOX_X]
 
 
-# In[5]:
-
-
-searchDict[0]['url']
-
-
 # In[6]:
 
 
@@ -289,7 +288,7 @@ for info in searchDict:
     info['driver'] = getDriver()
     thread.start_new_thread(runScrapForSearchUrl, (info,))
 
-# runScrapForSearchUrl(searchDict[0]['store'], searchDict[0]['searchUrl'])
+# runScrapForSearchUrl(searchDict[0]['store'], searchDict[0]['searchUrl']
 
 
 # In[ ]:
@@ -297,51 +296,4 @@ for info in searchDict:
 
 for info in searchDict:
     recycleDriver(info['driver'])
-
-
-# In[8]:
-
-
-# In[ ]:
-
-
-#Future Controller implementation
-
-# #Will soon flesh out controller to handle page specific requests/data retrievale methods
-# class storeController(ABC):
-#     def __init__(self, driver, storeType):
-#         self.driver = driver
-#         self.storeType = storeType
-        
-#     def printStore(self):
-#         print(f'This is the original class {self.storetype}')
-
-#     #Get Data
-#     def getData(self):
-    
-#     #Parse Data
-    
-#     #Report Data
-        
-# #Best Buy
-# class bestBuyController(storeController):
-#     pass
-    
-# def getController(driver, storeType)-> storeController:
-#     if storeType is BESTBUY_STORE:
-#         return bestBuyController(driver, storeType)
-#     else:
-#         print('Something has happenened')
-
-# driver = None
-# bc = bestBuyController(driver, BESTBUY_STORE)
-
-# controllerForJob = getController(driver, BESTBUY_STORE)
-# type(controllerForJob)
-
-
-# In[ ]:
-
-
-
 
