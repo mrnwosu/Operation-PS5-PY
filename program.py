@@ -205,6 +205,7 @@ def processListingData(listings: list):
 def getDriver(driver = None):
     if driver is None:
         try:
+            log.info(f'Chrome Driver Path is {DRIVER_FILE_PATH}')
             driver = webdriver.Chrome(executable_path=DRIVER_FILE_PATH)
 
         except BaseException as err:
