@@ -208,6 +208,8 @@ def getDriver(driver = None):
             log.info(f'Chrome Driver Path is {DRIVER_FILE_PATH}')
             chromeOptions = webdriver.ChromeOptions()
             chromeOptions.add_argument('--headless')
+            chromeOptions.add_argument('--no-sandbox')
+            chromeOptions.add_argument('--disable-dev-shm-usage')
             driver = webdriver.Chrome(executable_path=DRIVER_FILE_PATH, chrome_options=chromeOptions)
 
         except BaseException as err:
