@@ -289,7 +289,12 @@ searchDict = [BESTBUY_PS5,BESTBUY_XBOX_X]
 
 threadList = []
 for info in searchDict:
+    product = info['product']
+    store = info['store']
+    log.info(f'Getting driver for {product} => {store}')
     info['driver'] = getDriver()
+
+    log.info(f'Starting thread for {product} => {store}')
     thread.start_new_thread(runScrapForSearchUrl, (info,))
 
 
