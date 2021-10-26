@@ -283,24 +283,13 @@ def runScrapForSearchUrl(storeInfoDict):
 
 # In[4]:
 
-
 searchDict = [BESTBUY_PS5,BESTBUY_XBOX_X]
 
-
 # In[6]:
-
 
 threadList = []
 for info in searchDict:
     info['driver'] = getDriver()
     thread.start_new_thread(runScrapForSearchUrl, (info,))
 
-# runScrapForSearchUrl(searchDict[0]['store'], searchDict[0]['searchUrl']
-
-
-# In[ ]:
-
-
-for info in searchDict:
-    recycleDriver(info['driver'])
 
