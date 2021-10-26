@@ -135,6 +135,7 @@ def getListingsInStock(listingsList):   #Fix typing here?
 #Process Data then send email
 def getListingData(store, listings):
     log.info('Parsing data from listings in page')
+    print('Parsing data from listings in page')
     
     listingList = []
 
@@ -301,7 +302,9 @@ info = searchDict[0]
 product = info['product']
 store = info['store']
 log.info(f'Getting driver for {product} => {store}')
+print(f'Getting driver for {product} => {store}')
 info['driver'] = getDriver()
 
 log.info(f'Starting thread for {product} => {store}')
+print(f'Starting thread for {product} => {store}')
 thread.start_new_thread(runScrapForSearchUrl, (info,))
