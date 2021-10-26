@@ -206,7 +206,9 @@ def getDriver(driver = None):
     if driver is None:
         try:
             log.info(f'Chrome Driver Path is {DRIVER_FILE_PATH}')
-            driver = webdriver.Chrome(executable_path=DRIVER_FILE_PATH)
+            chromeOptions = webdriver.ChromeOptions()
+            chromeOptions.add_argument('--headless')
+            driver = webdriver.Chrome(executable_path=DRIVER_FILE_PATH, chrome_options=chromeOptions)
 
         except BaseException as err:
             log.error(f'Unable to stand up new driver => {err.args[0]}')
