@@ -332,12 +332,9 @@ def doWork_Single(searchInfos):
             recycleDriver(driver)
     
         except BaseException as err:
-            log.error(f'Something happened. => {err.args[0]}')
+            log.exception(f'Something happened. => {err.args[0]}')
             recycleDriver(driver)
             driver = getDriver()
-        
-        
-
 
 # In[ ]:
 
