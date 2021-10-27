@@ -200,7 +200,7 @@ def getDriver(driver = None):
             chromeOptions.add_argument('--disable-gpu')
             chromeOptions.add_argument('--disable-dev-shm-usage')
             driver = webdriver.Chrome(executable_path=DRIVER_FILE_PATH, chrome_options=chromeOptions)
-            driver = webdriver.Chrome(executable_path=DRIVER_FILE_PATH)
+            #driver = webdriver.Chrome(executable_path=DRIVER_FILE_PATH)
 
         except BaseException as err:
             log.error(f'Unable to stand up new driver => {err.args[0]}')
