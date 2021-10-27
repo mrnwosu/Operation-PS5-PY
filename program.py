@@ -16,6 +16,7 @@ from selenium.webdriver.common.action_chains import ActionChains
 from bs4 import BeautifulSoup as bs
 
 import time
+import threading 
 import _thread as thread
 
 import os
@@ -31,7 +32,7 @@ import logging as log
 
 
 #Configuring Logging
-log.basicConfig(format='%(asctime)s => %(levelname)s => %(funcName)s => %(message)s', filename='log.log', level=log.INFO)
+log.basicConfig(format='%(asctime)s => %(levelname)s => %(funcName)s => %(message)s', filename='log.log', level=log.DEBUG)
 
 #Constants
 isWindows = 'windows' in platform.platform().lower() 
@@ -121,6 +122,7 @@ def getDataFromListingSoups_bestbuy(soup):
     skuValue = getSelectionText(soup, 'span[class*="sku-value"]', index=1)
     skuId = soup['data-sku-id']
     
+
     price = getSelectionText(soup, 'span[class="sr-only"]').split('$')[-1]
     return Listing(BESTBUY_STORE, name, price, listingUrl, fulfillmentSummary, addToCartText, skuValue, skuId)
 
@@ -135,7 +137,6 @@ def getListingsInStock(listingsList):   #Fix typing here?
 #Process Data then send email
 def getListingData(store, listings):
     log.info('Parsing data from listings in page')
-    print('Parsing data from listings in page')
     
     listingList = []
 
@@ -145,7 +146,7 @@ def getListingData(store, listings):
             listingList.append(data)
         
 #         For Testings
-#         listingList.append(Listing(BESTBUY_STORE, 'Test PS5', '599.99', 'facebook.com', 'we got it', 'Add To Cart', 'randomNumber', 'anotherRandomNumer'))
+        # listingList.append(Listing(BESTBUY_STORE, 'Test PS5', '599.99', 'facebook.com', 'we got it', 'Add To Cart', 'randomNumber', 'anotherRandomNumer'))
 
     else:
         return None
@@ -194,8 +195,8 @@ def processListingData(listings: list):
     if(len(listingsInStock) > 0):
         for l in listingsInStock:
             message = getEmailMessageForInStockItem(l)
-#             sendEmail(l, message, False)
-            sendEmail(l, message)
+            sendEmail(l, message, False)
+            # sendEmail(l, message)
     
     listingFight = {}
     listingFight['listingCount'] = len(listings)
@@ -214,6 +215,7 @@ def getDriver(driver = None):
             chromeOptions.add_argument('--disable-gpu')
             chromeOptions.add_argument('--disable-dev-shm-usage')
             driver = webdriver.Chrome(executable_path=DRIVER_FILE_PATH, chrome_options=chromeOptions)
+            driver = webdriver.Chrome(executable_path=DRIVER_FILE_PATH)
 
         except BaseException as err:
             log.error(f'Unable to stand up new driver => {err.args[0]}')
@@ -252,7 +254,7 @@ def has_connection(driver):
     
 def runScrapForSearchUrl(storeInfoDict):
     runCounter = 0
-    while 0 < 1337:
+    while storeInfoDict['stop'] is False:
         runCounter += 1
         try:
             if navigateToPage(storeInfoDict['driver'],storeInfoDict['url']) is False:
@@ -278,33 +280,47 @@ def runScrapForSearchUrl(storeInfoDict):
             log.error(f'Something happened. => {err.args[0]}')
             recycleDriver(storeInfoDict['driver'])
             storeInfoDict['driver'] = getDriver()
-
+    
+    log.error('Stop called..')
+    recycleDriver(storeInfoDict['driver'])
+    log.info(f'Exiting Thread for {storeInfoDict["product"]}')
 
 
 
 # In[4]:
+#Worker functions
+def doWork_Threads(searchInfos):
+    threads = []
+    for info in searchInfos:
+        info['stop'] = False
+        product = info['product']
+        store = info['store']
 
-searchDict = [BESTBUY_PS5,BESTBUY_XBOX_X]
+        log.info(f'Getting driver for {product} => {store}')
+        info['driver'] = getDriver()
+        log.info(f'Starting thread for {product} => {store}')
+        thread = threading.Thread(target=runScrapForSearchUrl, args=(info,))
+        threads.append(thread)
+        thread.start()
 
-# In[6]:
+    while True:
+        try:
+            log.info('Things are going well..')
+            time.sleep(5)
+        except KeyboardInterrupt:
+            for info in searchInfos:
+                info['stop'] = True
+            break
 
-threadList = []
-# for info in searchDict:
-#     product = info['product']
-#     store = info['store']
-#     log.info(f'Getting driver for {product} => {store}')
-#     info['driver'] = getDriver()
+    for t in threads:
+        t.join()
 
-#     log.info(f'Starting thread for {product} => {store}')
-#     thread.start_new_thread(runScrapForSearchUrl, (info,))
 
-info = searchDict[0]
-product = info['product']
-store = info['store']
-log.info(f'Getting driver for {product} => {store}')
-print(f'Getting driver for {product} => {store}')
-info['driver'] = getDriver()
+#In[5]
 
-log.info(f'Starting thread for {product} => {store}')
-print(f'Starting thread for {product} => {store}')
-thread.start_new_thread(runScrapForSearchUrl, (info,))
+searchInfos = [BESTBUY_PS5,BESTBUY_XBOX_X]
+doWork_Threads(searchInfos)
+
+log.info('Exiting program')
+
+# %%
