@@ -194,11 +194,20 @@ def getDriver(driver = None):
         try:
             log.info(f'Chrome Driver Path is {DRIVER_FILE_PATH}')
             chromeOptions = webdriver.ChromeOptions()
-            chromeOptions.add_argument('--no-sandbox')
-            chromeOptions.add_argument('--headless')
-            chromeOptions.add_argument('--disable-extensions')
-            chromeOptions.add_argument('--disable-gpu')
-            chromeOptions.add_argument('--disable-dev-shm-usage')
+            if '--no-sandbox' in sys.argv:
+                chromeOptions.add_argument('--no-sandbox')
+            
+            if '--headless' in sys.argv:
+                chromeOptions.add_argument('--headless')
+
+            if '--disable-gpu' in sys.argv:
+                chromeOptions.add_argument('--disable-gpu')
+            
+            if '--disable-extensions' in sys.argv:
+                chromeOptions.add_argument('--disable-extensions')
+            
+            if '--disable-dev-shm-usage' in sys.argv:
+                chromeOptions.add_argument('--disable-dev-shm-usage')
             driver = webdriver.Chrome(executable_path=DRIVER_FILE_PATH, chrome_options=chromeOptions)
             #driver = webdriver.Chrome(executable_path=DRIVER_FILE_PATH)
 
