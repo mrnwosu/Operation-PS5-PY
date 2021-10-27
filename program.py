@@ -1,9 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# # Operation PS5
-
-# In[25]:
+# In[31]:
 
 
 from selenium import webdriver
@@ -21,6 +19,7 @@ import _thread as thread
 
 import os
 import platform
+import csv
 
 import smtplib
 from email.message import EmailMessage as EmailMessage
@@ -28,25 +27,7 @@ from email.message import EmailMessage as EmailMessage
 import logging as log
 
 
-# In[26]:
-
-
-#Configuring Logging
-log.basicConfig(format='%(asctime)s => %(levelname)s => %(funcName)s => %(message)s', filename='log.log', level=log.DEBUG)
-
-#Constants
-isWindows = 'windows' in platform.platform().lower() 
-DRIVER_FILE_NAME = 'chromedriver.exe' if isWindows else '/usr/lib/chromium-browser/chromedriver'
-DRIVER_FILE_PATH = os.path.join(os.getcwd(), DRIVER_FILE_NAME)
-
-EMAIL_ADDRESS = os.environ.get('G_USE')
-PASSWORD = os.environ.get('G_PASS')
-
-BESTBUY_STORE = 'best_buy'
-BESTBUY_PS5 = {'store': BESTBUY_STORE, 'product': 'Playstation 5', 'url': 'https://www.bestbuy.com/site/playstation-5/ps5-consoles/pcmcat1587395025973.c?id=pcmcat1587395025973'}
-BESTBUY_XBOX_X = {'store': BESTBUY_STORE,'product' : 'Xbox X', 'url' : 'https://www.bestbuy.com/site/searchpage.jsp?_dyncharset=UTF-8&browsedCategory=pcmcat1586900952752&id=pcat17071&iht=n&ks=960&list=y&qp=modelfamily_facet%3DModel%20Family~Xbox%20Series%20X&sc=Global&st=categoryid%24pcmcat1586900952752&type=page&usc=All%20Categories'} 
-
-# In[3]:
+# In[32]:
 
 
 #-------------------------------------
@@ -83,11 +64,9 @@ def getSelectionPropValue(soup, cssSelection, property='', index = 0):
     except:
         log.debug(f'Property not found. Selection: {cssSelection}')
         return ''
-
-
     
 #-------------------------------------
-#         Classes
+#         General
 #-------------------------------------      
     
 class Listing:
@@ -102,7 +81,13 @@ class Listing:
     self.skuValue = skuValue
     self.skuId = skuId
 
-    
+def getProductDicts():
+    productList = []
+    input_file = csv.DictReader(open("products.csv"))
+    for row in input_file:
+        productList.append(dict(row))
+
+    return productList
 
 #-------------------------------------
 #         Best Buy Specific Methods
@@ -287,7 +272,9 @@ def runScrapForSearchUrl(storeInfoDict):
 
 
 
-# In[4]:
+# In[ ]:
+
+
 #Worker functions
 def doWork_Threads(searchInfos):
     threads = []
@@ -316,11 +303,74 @@ def doWork_Threads(searchInfos):
         t.join()
 
 
-#In[5]
+def doWork_Single(searchInfos):
+    runCounter = 0
+    driver = getDriver()
+    while True:
+        try:
+            indexForSearch = runCounter % len(searchInfos)
+            storeInfoDict = searchInfos[indexForSearch]
 
-searchInfos = [BESTBUY_PS5,BESTBUY_XBOX_X]
-doWork_Threads(searchInfos)
+            if navigateToPage(driver,storeInfoDict['url']) is False:
+                    url = storeInfoDict['url']
+                    log.error(f'Unable to navigate to page, {url}')
+                    raise BaseException('Recyclng....')
+
+            pageSoup = bs(driver.page_source, 'html.parser')
+            listings = pageSoup.find_all('li', {"class": "sku-item"})
+            data = getListingData(storeInfoDict['store'], listings)
+            reportDict = processListingData(data)
+
+            log.info(f"Run report => Store: {storeInfoDict['store']} Product: {storeInfoDict['product']} ListingsFound: {reportDict['listingCount']} In-Stock {reportDict['listingsInStock']}")
+
+
+            runCounter += 1
+            WebDriverWait(driver, 30, poll_frequency=30, ignored_exceptions=None)
+
+        except KeyboardInterrupt:
+            log.Error('Stop Called')
+            recycleDriver(driver)
+    
+        except BaseException as err:
+            log.error(f'Something happened. => {err.args[0]}')
+            recycleDriver(driver)
+            driver = getDriver()
+        
+        
+
+
+# In[ ]:
+
+
+#Configuring Logging
+log.basicConfig(format='%(asctime)s => %(levelname)s => %(funcName)s => %(message)s', filename='log.log', level=log.DEBUG)
+
+#Constants
+isWindows = 'windows' in platform.platform().lower() 
+DRIVER_FILE_NAME = 'chromedriver.exe' if isWindows else '/usr/lib/chromium-browser/chromedriver'
+DRIVER_FILE_PATH = os.path.join(os.getcwd(), DRIVER_FILE_NAME)
+BESTBUY_STORE = 'best_buy'
+
+EMAIL_ADDRESS = os.environ.get('G_USE')
+PASSWORD = os.environ.get('G_PASS')
+
+searchInfos = getProductDicts()
+
+# doWork_Threads(searchInfos)
+doWork_Single(searchInfos)
 
 log.info('Exiting program')
 
-# %%
+
+# In[ ]:
+
+
+# #Kill
+# raise KeyboardInterrupt
+
+
+# In[ ]:
+
+
+
+
