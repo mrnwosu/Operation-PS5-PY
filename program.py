@@ -236,7 +236,11 @@ def has_connection(driver):
     
     except: 
         return True
-    
+
+def logRunReport(reportDict, storeInfoDict):
+    if reportDict is not None:
+        log.info(f"Run report => Store: {storeInfoDict['store']} Product: {storeInfoDict['product']} ListingsFound: {reportDict['listingCount']} In-Stock {reportDict['listingsInStock']}")
+
 def runScrapForSearchUrl(storeInfoDict):
     runCounter = 0
     while storeInfoDict['stop'] is False:
@@ -251,14 +255,8 @@ def runScrapForSearchUrl(storeInfoDict):
             listings = pageSoup.find_all('li', {"class": "sku-item"})
             data = getListingData(storeInfoDict['store'], listings)
             reportDict = processListingData(data)
-            listingCount = reportDict['listingCount']
-            listingsInStock = reportDict['listingsInStock']
-            product = storeInfoDict['product']
-            store = storeInfoDict['store']
+            logRunReport(reportDict, storeInfoDict)
 
-            
-            log.info(f'Run report => Store: {store} Product: {product} ListingsFound: {listingCount} In-Stock {listingsInStock}')
-                     
             WebDriverWait(storeInfoDict['driver'], 30, poll_frequency=30, ignored_exceptions=None)
 
         except BaseException as err:
@@ -320,10 +318,8 @@ def doWork_Single(searchInfos):
             listings = pageSoup.find_all('li', {"class": "sku-item"})
             data = getListingData(storeInfoDict['store'], listings)
             reportDict = processListingData(data)
-
-            log.info(f"Run report => Store: {storeInfoDict['store']} Product: {storeInfoDict['product']} ListingsFound: {reportDict['listingCount']} In-Stock {reportDict['listingsInStock']}")
-
-
+            logRunReport(reportDict,storeInfoDict)
+            
             runCounter += 1
             WebDriverWait(driver, 30, poll_frequency=30, ignored_exceptions=None)
 
