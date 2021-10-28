@@ -128,7 +128,7 @@ def getListingData(store, listings):
     
     listingList = []
 
-    if store is BESTBUY_STORE:
+    if store == BESTBUY_STORE:
         for l in listings:
             data = getDataFromListingSoups_bestbuy(l)
             listingList.append(data)
@@ -361,7 +361,7 @@ def doWork_Single(searchInfos):
 
 
 #Configuring Logging
-log.basicConfig(format='%(asctime)s => %(levelname)s => %(funcName)s => %(message)s', filename='log.log', level=log.DEBUG)
+log.basicConfig(format='%(asctime)s => %(levelname)s => %(funcName)s => %(message)s', filename='log.log', level=log.INFO)
 
 #Constants
 isWindows = 'windows' in platform.platform().lower() 
