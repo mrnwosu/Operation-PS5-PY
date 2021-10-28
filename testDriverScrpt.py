@@ -49,6 +49,7 @@ def getDriver(driver = None):
         try:
             log.info(f'Chrome Driver Path is {DRIVER_FILE_PATH}')
             options = getOptions()
+            log.info(f'Driver arguments are {options.arguments}')
             
             if '--chrome' in sys.argv:
                 driver = webdriver.Chrome(executable_path=DRIVER_FILE_PATH, options=options)
