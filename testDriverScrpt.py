@@ -147,6 +147,8 @@ DRIVER_FILE_NAME = 'chromedriver.exe' if isWindows else '/usr/lib/chromium-brows
 DRIVER_FILE_PATH = os.path.join(os.getcwd(), DRIVER_FILE_NAME)
 BESTBUY_STORE = 'best_buy'
 
+log.info(f'System arguments are as follows: {sys.argv}')
+
 products = getProductDicts()
 log.debug(products)
 try:
