@@ -24,7 +24,7 @@ def sendEmail(message, debug = True):
         log.info('Email Sent')
         
     except BaseException as err:
-        log.error(f'Something wrong happened when sending notication')
+        log.exception(f'Something wrong happened when sending notication')
 
 def getEmailMessageForInStockItem(message='Test Message'): 
     msg = EmailMessage()
@@ -33,6 +33,9 @@ def getEmailMessageForInStockItem(message='Test Message'):
     msg['To'] = EMAIL_ADDRESS
     msg.set_content(f'{message} from {platform.platform()}')
     return msg
+
+
+log.basicConfig(format='%(asctime)s => %(levelname)s => %(funcName)s => %(message)s', filename='log.log', level=log.DEBUG)
 
 EMAIL_ADDRESS = os.environ.get('G_USE')
 PASSWORD = os.environ.get('G_PASS')
