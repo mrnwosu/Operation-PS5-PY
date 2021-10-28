@@ -130,9 +130,11 @@ BESTBUY_STORE = 'best_buy'
 
 products = getProductDicts()
 log.debug(products)
-
-driver = {} 
-for product in products:
-    doTest(driver, product)
+try:
+    driver = {} 
+    for product in products:
+        doTest(driver, product)
+except:
+    log.exception('Something happened')
 
 recycleDriver(driver['driver'])
