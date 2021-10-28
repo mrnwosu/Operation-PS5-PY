@@ -5,6 +5,7 @@
 
 
 from selenium import webdriver
+from selenium.webdriver.firefox.options import Options as FirefoxOptions
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
@@ -191,27 +192,43 @@ def processListingData(listings: list):
     
     return listingFight
 
+def getOptions():
+    options = None
+    if '--chrome' in sys.argv:
+        options = webdriver.ChromeOptions()
+    
+    elif '--firefox' in sys.argv:
+        options = FirefoxOptions()
+    else:
+        raise BaseException('No Driver Selected')
+
+    if '--no-sandbox' in sys.argv:
+        options.add_argument('--no-sandbox')
+    
+    if '--headless' in sys.argv:
+        options.add_argument('--headless')
+
+    if '--disable-gpu' in sys.argv:
+        options.add_argument('--disable-gpu')
+    
+    if '--disable-extensions' in sys.argv:
+        options.add_argument('--disable-extensions')
+    
+    if '--disable-dev-shm-usage' in sys.argv:
+        options.add_argument('--disable-dev-shm-usage')
+
+
 def getDriver(driver = None):
     if driver is None:
         try:
             log.info(f'Chrome Driver Path is {DRIVER_FILE_PATH}')
-            chromeOptions = webdriver.ChromeOptions()
-            if '--no-sandbox' in sys.argv:
-                chromeOptions.add_argument('--no-sandbox')
+            options = getOptions()
             
-            if '--headless' in sys.argv:
-                chromeOptions.add_argument('--headless')
-
-            if '--disable-gpu' in sys.argv:
-                chromeOptions.add_argument('--disable-gpu')
+            if '--chrome' in sys.argv:
+                driver = webdriver.Chrome(executable_path=DRIVER_FILE_PATH, options=options)
             
-            if '--disable-extensions' in sys.argv:
-                chromeOptions.add_argument('--disable-extensions')
-            
-            if '--disable-dev-shm-usage' in sys.argv:
-                chromeOptions.add_argument('--disable-dev-shm-usage')
-            driver = webdriver.Chrome(executable_path=DRIVER_FILE_PATH, chrome_options=chromeOptions)
-            #driver = webdriver.Chrome(executable_path=DRIVER_FILE_PATH)
+            elif '--firefox' in sys.argv:
+                driver = webdriver.Firefox(options=options)
 
         except BaseException as err:
             log.error(f'Unable to stand up new driver => {err.args[0]}')
