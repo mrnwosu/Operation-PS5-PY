@@ -192,46 +192,43 @@ def processListingData(listings: list):
     
     return listingFight
 
+def checkAndAddArguments(options):
+    for arg in sys.argv:
+        if arg.startswith('--'):
+            log.info(f'Adding following argument :=> {arg}')
+            options.add_argument(arg)
+    return options
+
 def getOptions():
     options = None
-    if '--chrome' in sys.argv:
+    if '-chrome' in sys.argv:
         options = webdriver.ChromeOptions()
     
-    elif '--firefox' in sys.argv:
+    elif '-firefox' in sys.argv:
         options = FirefoxOptions()
     else:
         raise BaseException('No Driver Selected')
 
-    if '--no-sandbox' in sys.argv:
-        options.add_argument('--no-sandbox')
-    
-    if '--headless' in sys.argv:
-        options.add_argument('--headless')
-
-    if '--disable-gpu' in sys.argv:
-        options.add_argument('--disable-gpu')
-    
-    if '--disable-extensions' in sys.argv:
-        options.add_argument('--disable-extensions')
-    
-    if '--disable-dev-shm-usage' in sys.argv:
-        options.add_argument('--disable-dev-shm-usage')
-
+    return checkAndAddArguments(options)
 
 def getDriver(driver = None):
     if driver is None:
         try:
-            log.info(f'Chrome Driver Path is {DRIVER_FILE_PATH}')
             options = getOptions()
+
+            log.info(f'{options}')
+            log.info(f'Driver arguments are {options.arguments}')
             
-            if '--chrome' in sys.argv:
+            if '-chrome' in sys.argv:
+                log.info(f'Chrome Driver Path is {DRIVER_FILE_PATH}')
                 driver = webdriver.Chrome(executable_path=DRIVER_FILE_PATH, options=options)
             
-            elif '--firefox' in sys.argv:
+            elif '-firefox' in sys.argv:
+                log.info('Using Geckodriver in PATH')
                 driver = webdriver.Firefox(options=options)
 
         except BaseException as err:
-            log.error(f'Unable to stand up new driver => {err.args[0]}')
+            log.exception(f'Unable to stand up new driver => {err.args[0]}')
             raise
     
     return driver

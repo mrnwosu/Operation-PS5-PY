@@ -18,11 +18,12 @@ def getProductDicts():
 
     return productList
 
-def checkAndAddArguments(option):
+def checkAndAddArguments(options):
     for arg in sys.argv:
         if arg.startswith('--'):
             log.info(f'Adding following argument :=> {arg}')
-            option.add_argument(arg)
+            options.add_argument(arg)
+    return options
 
 def getOptions():
     options = None
@@ -34,7 +35,7 @@ def getOptions():
     else:
         raise BaseException('No Driver Selected')
 
-    checkAndAddArguments(options)
+    return checkAndAddArguments(options)
 
 def getDriver(driver = None):
     if driver is None:
