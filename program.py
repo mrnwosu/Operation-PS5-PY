@@ -14,6 +14,7 @@ from selenium.webdriver.common.action_chains import ActionChains
 
 from bs4 import BeautifulSoup as bs
 
+from datetime import timedelta
 import time
 import threading 
 import _thread as thread
@@ -262,9 +263,10 @@ def has_connection(driver):
     except: 
         return True
 
-def logRunReport(reportDict, storeInfoDict):
+def logRunReport(reportDict, storeInfoDict,timeElapsed):
     if reportDict is not None:
         log.info(f"Run report => Store: {storeInfoDict['store']} Product: {storeInfoDict['product']} ListingsFound: {reportDict['listingCount']} In-Stock {reportDict['listingsInStock']}")
+    log.info(f'Run time => {str(timedelta(seconds=timeElapsed))}')
 
 def runScrapForSearchUrl(storeInfoDict):
     runCounter = 0
@@ -331,6 +333,8 @@ def doWork_Single(searchInfos):
     driver = getDriver()
     while True:
         try:
+            startTime = time.time()
+
             indexForSearch = runCounter % len(searchInfos)
             storeInfoDict = searchInfos[indexForSearch]
 
@@ -343,7 +347,10 @@ def doWork_Single(searchInfos):
             listings = pageSoup.find_all('li', {"class": "sku-item"})
             data = getListingData(storeInfoDict['store'], listings)
             reportDict = processListingData(data)
-            logRunReport(reportDict,storeInfoDict)
+
+            endTime = time.time()
+
+            logRunReport(reportDict,storeInfoDict, endTime-startTime)
             
             runCounter += 1
             WebDriverWait(driver, 30, poll_frequency=30, ignored_exceptions=None)
