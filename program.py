@@ -368,7 +368,7 @@ def doWork_Single(searchInfos):
 
 
 #Configuring Logging
-log.basicConfig(format='%(asctime)s => %(levelname)s => %(funcName)s => %(message)s', filename='log.log', level=log.INFO)
+log.basicConfig(format='%(asctime)s: %(levelname)s: %(funcName)s => %(message)s', filename='log.log', level=log.INFO)
 
 #Constants
 isWindows = 'windows' in platform.platform().lower() 

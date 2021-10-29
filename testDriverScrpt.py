@@ -132,7 +132,7 @@ def banner(message):
     custom_fig = Figlet(font='graffiti')
     log.info(custom_fig.renderText(message))
 
-log.basicConfig(format='%(asctime)s => %(levelname)s => %(funcName)s => %(message)s', filename='log.log', level=log.DEBUG)
+log.basicConfig(format='%(asctime)s: %(levelname)s: %(funcName)s => %(message)s', filename='log.log', level=log.DEBUG)
 banner('Driver Test.')
 
 

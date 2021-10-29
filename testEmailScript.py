@@ -35,7 +35,7 @@ def getEmailMessageForInStockItem(message='Test Message'):
     return msg
 
 
-log.basicConfig(format='%(asctime)s => %(levelname)s => %(funcName)s => %(message)s', filename='log.log', level=log.DEBUG)
+log.basicConfig(format='%(asctime)s: %(levelname)s: %(funcName)s => %(message)s', filename='log.log', level=log.DEBUG)
 
 EMAIL_ADDRESS = os.environ.get('G_USE')
 PASSWORD = os.environ.get('G_PASS')
