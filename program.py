@@ -23,7 +23,8 @@ import os
 import platform
 import sys
 import csv
-
+from pydub import AudioSegment
+from pydub.playback import play
 
 import smtplib
 from email.message import EmailMessage as EmailMessage
@@ -37,8 +38,17 @@ import logging as log
 #-------------------------------------
 #         System Methods
 #------------------------------------- 
-# def log(message, logLevel='info', exception=None):
-#     pass
+
+def playSound():
+    # log.info('Playing Sound.')
+    try:
+        wd = os.getcwd()
+        NOTIFICATION_FILE_PATH = f'{wd}\\assets\\youGotmail.wav'
+        command = f'powershell -c (New-Object Media.SoundPlayer "{NOTIFICATION_FILE_PATH}").PlaySync()'
+        os.system(command)
+    except:
+        # log.exception('Something wrong happened when playing sound')
+        print('Something wrong happened./')
 
 #-------------------------------------
 #         Selection Methods
@@ -146,7 +156,7 @@ def getListingData(store, listings):
 #Function to make email notification
 def getEmailMessageForInStockItem(listing: Listing): 
     msg = EmailMessage()
-    msg['Subject'] = f'{listing.listName} in stock! @ {listing.store.capitalize()}'
+    msg['Subject'] = f'!!! {listing.listName} in stock! @ {listing.store.capitalize()}'
     msg['From'] = EMAIL_ADDRESS
     msg['To'] = EMAIL_ADDRESS
     msg.set_content(f'listing URL is here: {listing.listingUrl}')
@@ -182,11 +192,11 @@ def processListingData(listings: list):
     log.info(f'{len(listingsInStock)} listing(s) in stock')
     
     if(len(listingsInStock) > 0):
+        playSound()
         for l in listingsInStock:
             message = getEmailMessageForInStockItem(l)
             sendEmail(l, message, False)
-            # sendEmail(l, message)
-    
+            
     listingFight = {}
     listingFight['listingCount'] = len(listings)
     listingFight['listingsInStock'] = len(listingsInStock)
@@ -376,6 +386,8 @@ DRIVER_FILE_NAME = 'chromedriver.exe' if isWindows else '/usr/lib/chromium-brows
 DRIVER_FILE_PATH = os.path.join(os.getcwd(), DRIVER_FILE_NAME)
 BESTBUY_STORE = 'best_buy'
 
+NOTIFICATION_FILE_PATH = './assets/youGotmail.mp3'
+
 EMAIL_ADDRESS = os.environ.get('G_USE')
 PASSWORD = os.environ.get('G_PASS')
 
@@ -385,17 +397,3 @@ searchInfos = getProductDicts()
 doWork_Single(searchInfos)
 
 log.info('Exiting program')
-
-
-# In[ ]:
-
-
-# #Kill
-# raise KeyboardInterrupt
-
-
-# In[ ]:
-
-
-
-
