@@ -7,7 +7,7 @@
             "request": "launch",
             "program": "${file}",
             "console": "integratedTerminal",
-            "cwd": "~/Projects/Operation-PS5"
+            "cwd": "C:\\Users\\inwosu\\Projects\\Operation-PS5"
         }
     ]
 }

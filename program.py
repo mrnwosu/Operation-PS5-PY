@@ -56,7 +56,8 @@ def getSelectionIfExists(soup, cssSelection, index=0):
     try:
         return result[index]
     except:
-        log.debug(f'Possibly out of range. Selection: {cssSelection}')
+        log.debug(f'Unable to get index of selection: {cssSelection}. Index: {index}')
+        return None
 
 def getSelectionText(soup, cssSelection, property='', index = 0):
     selection = getSelectionIfExists(soup, cssSelection, index)
@@ -116,7 +117,6 @@ def getDataFromListingSoups_bestbuy(soup):
     skuValue = getSelectionText(soup, 'span[class*="sku-value"]', index=1)
     skuId = soup['data-sku-id']
     
-
     price = getSelectionText(soup, 'span[class="sr-only"]').split('$')[-1]
     return Listing(BESTBUY_STORE, name, price, listingUrl, fulfillmentSummary, addToCartText, skuValue, skuId, soup)
 
@@ -149,6 +149,7 @@ def getListingData(store, listings):
 
 
 def getEmailMessage_ItemInStock(listing: Listing): 
+    log.info('Composing "Item in stock" message')
     msg = EmailMessage()
     msg['Subject'] = f'!!! {listing.listName} in stock! @ {listing.store.capitalize()}'
     msg['From'] = info['email']
@@ -157,6 +158,7 @@ def getEmailMessage_ItemInStock(listing: Listing):
     return msg
 
 def getEmailMessage_ItemPurchased(listing: Listing, buyResult: dict): #Successfully purchase. Will need confirmation number and etc.
+    log.info('Composing "Item Purchased" message')
     msg = EmailMessage()
     msg['Subject'] = f'!!! {listing.listName} purchased from {listing.store.capitalize()}, {buyResult["order_number"]}'
     msg['From'] = info['email']
@@ -165,6 +167,7 @@ def getEmailMessage_ItemPurchased(listing: Listing, buyResult: dict): #Successfu
     return msg
 
 def getEmailMessage_ItemNotPurchase(listing: Listing):
+    log.info('Composing "Item NOT Purchased" message')
     msg = EmailMessage()
     msg['Subject'] = f'!!! {listing.listName} unable to be purchase from {listing.store.capitalize()}'
     msg['From'] = info['email']
@@ -275,14 +278,6 @@ def recycleDriver(driver):
     driver = None
     
     
-def has_connection(driver):
-    try:
-        driver.find_element_by_xpath('//span[@jsselect="heading" and @jsvalues=".innerHTML:msg"]')
-        return False
-    
-    except: 
-        return True
-
 def logRunReport(reportDict, storeInfoDict,timeElapsed):
     if reportDict is not None:
         log.info(f"Run report => Store: {storeInfoDict['store']} Product: {storeInfoDict['product']} ListingsFound: {reportDict['listingCount']} In-Stock {reportDict['listingsInStock']}")
@@ -302,168 +297,6 @@ def runScrapForSearchUrl(storeInfoDict):
             listings = pageSoup.find_all('li', {"class": "sku-item"})
             data = getListingData(storeInfoDict['store'], listings)
             reportDict = processListingData(data)
-            logRunReport(reportDict, storeInfoDict)
-
-            WebDriverWait(storeInfoDict['driver'], 30, poll_frequency=30, ignored_exceptions=None)
-
-        except BaseException as err:
-            log.error(f'Something happened. => {err.args[0]}')
-            recycleDriver(storeInfoDict['driver'])
-            storeInfoDict['driver'] = getDriver()
-    
-    log.error('Stop called..')
-    recycleDriver(storeInfoDict['driver'])
-    log.info(f'Exiting Thread for {storeInfoDict["product"]}')
-
-
-
-
-# %%
-def getEmailMessage_ItemPurchased(listing: Listing): #Successfully purchase. Will need confirmation number and etc.
-    msg = EmailMessage()
-    msg['Subject'] = f'!!! {listing.listName} purchased from {listing.store.capitalize()}'
-    msg['From'] = info['email']
-    msg['To'] = info['email']
-    msg.set_content(f'listing URL is here: {listing.listingUrl}') # Send Confirmation Number Here
-    return msg
-
-def getEmailMessage_ItemNotPurchase(listing: Listing):
-    msg = EmailMessage()
-    msg['Subject'] = f'!!! {listing.listName} unable to be purchase from {listing.store.capitalize()}'
-    msg['From'] = info['email']
-    msg['To'] = info['email']
-    msg.set_content(f'listing URL is here: {listing.listingUrl}') # Maybe capture the exception and put here.
-    return msg
-
-def sendEmail(message, debug = True):
-    log.info(f'Sending email with subject => {message["Subject"]}')
-    mailServer = 'localhost' if debug else 'smtp.gmail.com'
-    mailServerPort = '25' if debug else '465'
-    
-    try:
-        if debug:
-            with smtplib.SMTP(mailServer, mailServerPort) as smtp:
-                smtp.login(info['email'], info['email_password'])
-                smtp.send_message(message)
-        else:
-            with smtplib.SMTP_SSL(mailServer, mailServerPort) as smtp:
-                smtp.login(info['email'], info['email_password'])
-                smtp.send_message(message)
-        log.info('Email Sent')
-        
-    except BaseException as err:
-        log.error(f'Something wrong happened when sending notication')
-
-def processListingData(driver, listings: list, listingSoup):
-    if listings == None or len(listings) == 0:
-        log.info('No listings found.')
-        return
-    log.info(f'{len(listings)} listing(s) found')
-    
-    listingsInStock = getListingsInStock(listings)
-    log.info(f'{len(listingsInStock)} listing(s) in stock')
-    
-    if(len(listingsInStock) > 0):
-        playSound()
-        for l in listingsInStock:
-            message = getEmailMessage_ItemInStock(l)
-            sendEmail(message, False)
-            
-    listingFight = {}
-    listingFight['listingCount'] = len(listings)
-    listingFight['listingsInStock'] = len(listingsInStock)
-    
-    return listingFight
-
-def checkAndAddArguments(options):
-    for arg in sys.argv:
-        if arg.startswith('--'):
-            log.info(f'Adding following argument :=> {arg}')
-            options.add_argument(arg)
-    return options
-
-def getOptions():
-    options = None
-    if '-chrome' in sys.argv:
-        options = webdriver.ChromeOptions()
-    
-    elif '-firefox' in sys.argv:
-        options = FirefoxOptions()
-    else:
-        raise BaseException('No Driver Selected')
-
-    return checkAndAddArguments(options)
-
-def getDriver(driver = None):
-    if driver is None:
-        try:
-            options = getOptions()
-
-            log.info(f'{options}')
-            log.info(f'Driver arguments are {options.arguments}')
-            
-            if '-chrome' in sys.argv:
-                log.info(f'Chrome Driver Path is {DRIVER_FILE_PATH}')
-                driver = webdriver.Chrome(executable_path=DRIVER_FILE_PATH, options=options)
-            
-            elif '-firefox' in sys.argv:
-                log.info('Using Geckodriver in PATH')
-                driver = webdriver.Firefox(options=options)
-
-        except BaseException as err:
-            log.exception(f'Unable to stand up new driver => {err.args[0]}')
-            raise
-    
-    return driver
-
-def navigateToPage(driver, searchUrl):
-    log.info(f'Navigating to {searchUrl[0:20]}...')
-    try:
-        driver.get(searchUrl)
-        
-    except BaseException as err:
-        log.error(f'Driver navigation fail => {err.args[0]}')
-        raise
-
-    
-def recycleDriver(driver):
-    log.info('Quiting driver')
-    try:
-        driver.close()
-        driver.quit()
-    except BaseException as err:
-        log.error(f'Quiting driver fail => {err.args[0]}')
-
-    driver = None
-    
-    
-def has_connection(driver):
-    try:
-        driver.find_element_by_xpath('//span[@jsselect="heading" and @jsvalues=".innerHTML:msg"]')
-        return False
-    
-    except: 
-        return True
-
-def logRunReport(reportDict, storeInfoDict,timeElapsed):
-    if reportDict is not None:
-        log.info(f"Run report => Store: {storeInfoDict['store']} Product: {storeInfoDict['product']} ListingsFound: {reportDict['listingCount']} In-Stock {reportDict['listingsInStock']}")
-    log.info(f'Run time => {str(timedelta(seconds=timeElapsed))}')
-
-def runScrapForSearchUrl(storeInfoDict):
-    runCounter = 0
-    while storeInfoDict['stop'] is False:
-        runCounter += 1
-        try:
-            if navigateToPage(storeInfoDict['driver'],storeInfoDict['url']) is False:
-                url = storeInfoDict['url']
-                log.error(f'Unable to navigate to page, {url}')
-                raise BaseException('Recyclng....')
-
-            pageSoup = bs(storeInfoDict['driver'].page_source, 'html.parser')
-            listings = pageSoup.find_all('li', {"class": "sku-item"})
-            data = getListingData(storeInfoDict['store'], listings)
-            reportDict = processListingData(storeInfoDict['driver'], data)
             logRunReport(reportDict, storeInfoDict)
 
             WebDriverWait(storeInfoDict['driver'], 30, poll_frequency=30, ignored_exceptions=None)
@@ -598,6 +431,7 @@ def isProductInCart(driver):
 #Check if successfully added
 # Listing Try add to card 
 def tryAddToCart(soup, driver, listingTitle = '') -> bool:
+    log.warning(f'Adding {listingTitle} to cart')
     removeElementByClass(driver, 'blue-assist-tab')
 
     addToCartButtonSoup = soup.find('button', {'data-button-state':'ADD_TO_CART'})
@@ -605,12 +439,14 @@ def tryAddToCart(soup, driver, listingTitle = '') -> bool:
 
     attempt = 0
     while True:
+        attempt += 1
+        log.warning(f'Attempt {attempt}...')
         findElemBySelectorAndClick(driver, f'button[data-sku-id="{sku}"]')
         time.sleep(3)
         if isProductInCart(driver):
+            log.warning('Added item to cart.')
             return True
         else:
-            attempt += 1
             if attempt > 20:
                 log.error(f'Unable to add item to cart => "{listingTitle}"')
                 return False
@@ -633,49 +469,57 @@ def fillAddress(driver):
     findElemBySelectorAndSendKeys(driver,'input[id$="zipcode"]',info['zip'])
 
 def fillContactInfo(driver):
-    print('Filling Contact info')
+    log.warning('Filling Contact info')
     findElemByIdAndSendKeys(driver,'user.emailAddress',info['email'])
     findElemByIdAndSendKeys(driver,'user.phone',info['phone_number'])
 
 def selectCard(driver):
-    print('Selecting Card')
+    log.warning('Selecting Card')
     findElemByIdAndSendKeys(driver,'optimized-cc-card-number',info['card_number'])
     time.sleep(2)
     findElemBySelectorAndClick(driver, 'section[class*="credit-card-form"] > div:nth-child(3) > div > div > button')
     time.sleep(2)
 
 def clickButtonForPaymentInformation(driver):
+    log.warning('Continuing to payment information.')
     findElemBySelectorAndClick(driver,'div[class="button--continue"] > button') 
 
 def purchaseSuccessfull(driver) -> bool:
+    log.warning('Checking if purchase was succesfull')
     try:
-        elem = WebDriverWait(driver, 10).until(
+        elem = WebDriverWait(driver, 30).until(
                 EC.presence_of_element_located((By.CSS_SELECTOR, 'div[class="thank-you-enhancement__info-bd"]' ))
             )
+        log.warning('Success')
         return True
     except:
+        log.warning('Fail')
         return False
 
 def getConfirmationDetails(driver) -> dict:
-    soup = bs(driver.page_source, 'html.parser')
+    log.warning('Getting dummy')
+    # confirmationSoup = bs(driver.page_source, 'html.parser')
     d = {}
-    d['arrival_date'] = getSelectionText(soup, 'div[class="thank-you-enhancement__info-bd" > p > span[class="thank-you-enhancement__emphasis"')
-    d['confirm_email'] = getSelectionText(soup, 'div[class="thank-you-enhancement__email-confirmation" > span[class="thank-you-enhancement__emphasis"')
-    d['order_number'] = getSelectionText(soup, 'div[class="thank-you-enhancement__order-number" > span[class="thank-you-enhancement__emphasis"')
-    d['order_status_url'] = getSelectionPropValue(soup, 'div[class="thank-you-enhancement__order-number" > a"', 'href' )
+    d['arrival_date'] = 'Arrival Date' #getSelectionText(confirmationSoup, 'div[class="thank-you-enhancement__info-bd" > p > span[class="thank-you-enhancement__emphasis"')
+    d['confirm_email'] = 'randomConfirmationEmail@mailinator.com' # getSelectionText(confirmationSoup, 'div[class="thank-you-enhancement__email-confirmation" > span[class="thank-you-enhancement__emphasis"')
+    d['order_number'] = 'Order number: ' # getSelectionText(confirmationSoup, 'div[class="thank-you-enhancement__order-number" > span[class="thank-you-enhancement__emphasis"')
+    d['order_status_url'] = 'This is an order status url' # getSelectionPropValue(confirmationSoup, 'div[class="thank-you-enhancement__order-number" > a"', 'href' )
+    log.warning(f'Confirmation Details Here {d}')
     return d
     
-def makePurchase(driver):
-    print('BUYING THE THING.')
+def makePurchase(driver) -> dict:
+    log.warning('!!!!!! BUYING THE THING.')
     findElemBySelectorAndClick(driver, 'button[data-track="Place your Order - Contact Card"')
-    if purchaseSuccessfull(driver) is True:
+    if purchaseSuccessfull(driver):
         return getConfirmationDetails(driver)
     else:
         return None
+
 def getRandomWait(start: int, finish: int) -> int:
     return random.randrange(start,finish)
 
 def consolidatedFill(driver):
+    log.warning('Running Consolidated Flow')
     fillAddress(driver)
     fillContactInfo(driver)
     clickButtonForPaymentInformation(driver)
@@ -683,6 +527,7 @@ def consolidatedFill(driver):
     return makePurchase(driver)
 
 def normalFill(driver):
+    log.warning('Running Normal Flow')
     fillContactInfo(driver)
     clickButtonForPaymentInformation(driver)
     selectCard(driver)
@@ -693,7 +538,7 @@ def runScriptNoError(driver, script):
     try:
         driver.execute_script(script)
     except:
-        print('Running the script threw an exception. Oh no')
+        log.exception('Running the script threw an exception. Oh no')
     
 def removeElementByClass(driver, className):
     runScriptNoError(driver, f'return document.getElementsByClassName("{className}")[0].remove()')
@@ -701,9 +546,10 @@ def removeElementByClass(driver, className):
 def removeElementById(driver, id):
     runScriptNoError(driver, f'return document.getElementById("{id}").remove()')
 
+#Either return None if unable to buy or confirmation summery 
 def tryToBuy(driver) -> dict:
     try:
-
+        log.warning('Navigating to cart')
         #Viewing Cart
         driver.get('https://www.bestbuy.com/cart')
 
@@ -717,13 +563,12 @@ def tryToBuy(driver) -> dict:
             EC.presence_of_element_located((By.CSS_SELECTOR, 'div[class="button--continue"] > button' ))
         )
 
-        purchuseResult = None
         pageSoup = bs(driver.page_source, 'html.parser')
         if len(pageSoup.select('input[id^="consolidatedAddresses"]')) > 0:
-            print('Running consolidated flow.')
+            log.warning('Running consolidated flow.')
             return consolidatedFill(driver)
         else:
-            print('Running regular flow.')
+            log.warning('Running regular flow.')
             return normalFill(driver)
         
     except BaseException as err:
@@ -731,6 +576,7 @@ def tryToBuy(driver) -> dict:
         return None
 
 def makeMoney(listingSoup, driver, listing):
+    log.warn('TIME TO MAKE SOME MONEY')
     if tryAddToCart(listingSoup, driver, listing.listName):
         buyResult = tryToBuy(driver)
         if buyResult is not None: 
@@ -755,11 +601,12 @@ NOTIFICATION_FILE_PATH = './assets/youGotmail.mp3'
 info = json.loads(os.environ.get('G_INFO'))
 
 searchInfos = getProductDicts()
+doWork_Single(searchInfos)
 
-# doWork_Threads(searchInfos)
+
 
 # %%
-# url = 'https://www.bestbuy.com/site/searchpage.jsp?st=french+press&_dyncharset=UTF-8&_dynSessConf=&id=pcat17071&type=page&sc=Global&cp=1&nrp=&sp=&qp=&list=n&af=true&iht=y&usc=All+Categories&ks=960&keys=keys'
+# url = 'https://www.bestbuy.com/site/searchpage.jsp?_dyncharset=UTF-8&browsedCategory=pcmcat1539617012875&id=pcat17071&iht=n&ks=960&list=y&qp=currentprice_facet%3DPrice~0%20to%205&sc=Global&sp=%2Bcurrentprice%20skuidsaas&st=categoryid%24pcmcat1539617012875&type=page&usc=All%20Categories'
 # driver = webdriver.Chrome(executable_path=DRIVER_FILE_PATH)
 # driver.get(url)
 # soup = bs(driver.page_source,'html.parser')
@@ -769,12 +616,6 @@ searchInfos = getProductDicts()
 # listingInQuestion = parsedListings[0]
 
 # makeMoney(firstListingSoup, driver, listingInQuestion)
-
-
-# %%
-
-
-# %%
 
 
 
