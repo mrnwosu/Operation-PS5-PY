@@ -29,6 +29,7 @@ from email.message import EmailMessage as EmailMessage
 
 import logging as log
 
+
 # %%
 #-------------------------------------
 #         System Methods
@@ -91,6 +92,14 @@ class Listing:
     self.skuValue = skuValue
     self.skuId = skuId
     self.soup = soup
+
+def getEmailList() -> list:
+    emailList = []
+    with open('emailList.txt') as file:
+        for line in file:
+           emailList.append(line.rstrip())
+    return emailList
+        
 
 def getProductDicts():
     productList = []
@@ -157,6 +166,19 @@ def getEmailMessage_ItemInStock(listing: Listing):
     msg.set_content(f'listing URL is here: {listing.listingUrl}')
     return msg
 
+def getEmailMessagesForEmailList_ItemInStock(listing: Listing): 
+    emailList = getEmailList()
+    messages = []
+    for email in emailList:
+        log.info(f'Composing "Item in stock" message for "{email}"')
+        msg = EmailMessage()
+        msg['Subject'] = f'!!! {listing.listName} in stock! @ {listing.store.capitalize()}'
+        msg['From'] = info['email']
+        msg['To'] = email
+        msg.set_content(f'listing URL is here: {listing.listingUrl}')
+        messages.append(msg)
+    return messages
+
 def getEmailMessage_ItemPurchased(listing: Listing, buyResult: dict): #Successfully purchase. Will need confirmation number and etc.
     log.info('Composing "Item Purchased" message')
     msg = EmailMessage()
@@ -206,8 +228,10 @@ def processListingData(driver, listings: list):
     if(len(listingsInStock) > 0):
         playSound()
         for l in listingsInStock:
-            message = getEmailMessage_ItemInStock(l)
-            sendEmail(message, False)
+            messages = getEmailMessagesForEmailList_ItemInStock(l)
+            for m in messages:
+                sendEmail(m, False)
+
             makeMoney(l.soup, driver, l)
             
     listingFight = {}
@@ -310,6 +334,7 @@ def runScrapForSearchUrl(storeInfoDict):
     recycleDriver(storeInfoDict['driver'])
     log.info(f'Exiting Thread for {storeInfoDict["product"]}')
 
+
 # %%
 #Worker functions
 def doWork_Threads(searchInfos):
@@ -374,6 +399,7 @@ def doWork_Single(searchInfos):
             log.exception(f'Something happened. => {err.args[0]}')
             recycleDriver(driver)
             driver = getDriver()
+
 
 
 # %%
@@ -586,6 +612,7 @@ def makeMoney(listingSoup, driver, listing):
             message = getEmailMessage_ItemNotPurchase(listing)
             sendEmail(message)
 
+
 # %%
 #Configuring Logging
 log.basicConfig(format='%(asctime)s: %(levelname)s: %(funcName)s => %(message)s', filename='log.log', level=log.INFO)
@@ -603,6 +630,7 @@ info = json.loads(os.environ.get('G_INFO'))
 searchInfos = getProductDicts()
 doWork_Single(searchInfos)
 
+
 # %%
 # url = 'https://www.bestbuy.com/site/searchpage.jsp?_dyncharset=UTF-8&browsedCategory=pcmcat1539617012875&id=pcat17071&iht=n&ks=960&list=y&qp=currentprice_facet%3DPrice~0%20to%205&sc=Global&sp=%2Bcurrentprice%20skuidsaas&st=categoryid%24pcmcat1539617012875&type=page&usc=All%20Categories'
 # driver = webdriver.Chrome(executable_path=DRIVER_FILE_PATH)
@@ -614,6 +642,21 @@ doWork_Single(searchInfos)
 # listingInQuestion = parsedListings[0]
 
 # makeMoney(firstListingSoup, driver, listingInQuestion)
+
+
+
+
+
+# %%
+emailList = []
+
+with open('emailList.txt') as file:
+    for line in file:
+        emailList.append(line.rstrip())
+        
+print(emailList)
+
+# %%
 
 
 
