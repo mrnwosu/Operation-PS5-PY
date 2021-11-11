@@ -603,8 +603,6 @@ info = json.loads(os.environ.get('G_INFO'))
 searchInfos = getProductDicts()
 doWork_Single(searchInfos)
 
-
-
 # %%
 # url = 'https://www.bestbuy.com/site/searchpage.jsp?_dyncharset=UTF-8&browsedCategory=pcmcat1539617012875&id=pcat17071&iht=n&ks=960&list=y&qp=currentprice_facet%3DPrice~0%20to%205&sc=Global&sp=%2Bcurrentprice%20skuidsaas&st=categoryid%24pcmcat1539617012875&type=page&usc=All%20Categories'
 # driver = webdriver.Chrome(executable_path=DRIVER_FILE_PATH)
