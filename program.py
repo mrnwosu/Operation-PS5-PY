@@ -505,6 +505,10 @@ def selectCard(driver):
     time.sleep(2)
     findElemBySelectorAndClick(driver, 'section[class*="credit-card-form"] > div:nth-child(3) > div > div > button')
     time.sleep(2)
+    try:
+        findElemBySelectorAndClick(driver, 'label[class="reward-calculator__label"]')
+    except:
+        log.info('swallowing reward card selection')
 
 def clickButtonForPaymentInformation(driver):
     log.warning('Continuing to payment information.')
@@ -613,11 +617,11 @@ def makeMoney(listingSoup, driver, listing):
             sendEmail(message)
 
 
-# %%
-#Configuring Logging
+# # %%
+# #Configuring Logging
 log.basicConfig(format='%(asctime)s: %(levelname)s: %(funcName)s => %(message)s', filename='log.log', level=log.INFO)
 
-#Constants
+# #Constants
 isWindows = 'windows' in platform.platform().lower() 
 DRIVER_FILE_NAME = 'chromedriver.exe' if isWindows else '/usr/lib/chromium-browser/chromedriver'
 DRIVER_FILE_PATH = os.path.join(os.getcwd(), DRIVER_FILE_NAME)
@@ -630,9 +634,8 @@ info = json.loads(os.environ.get('G_INFO'))
 searchInfos = getProductDicts()
 doWork_Single(searchInfos)
 
-
 # %%
-# url = 'https://www.bestbuy.com/site/searchpage.jsp?_dyncharset=UTF-8&browsedCategory=pcmcat1539617012875&id=pcat17071&iht=n&ks=960&list=y&qp=currentprice_facet%3DPrice~0%20to%205&sc=Global&sp=%2Bcurrentprice%20skuidsaas&st=categoryid%24pcmcat1539617012875&type=page&usc=All%20Categories'
+# url = 'https://www.bestbuy.com/site/promo/savings-select-windows-laptops'
 # driver = webdriver.Chrome(executable_path=DRIVER_FILE_PATH)
 # driver.get(url)
 # soup = bs(driver.page_source,'html.parser')
@@ -642,20 +645,6 @@ doWork_Single(searchInfos)
 # listingInQuestion = parsedListings[0]
 
 # makeMoney(firstListingSoup, driver, listingInQuestion)
-
-
-
-
-
-# %%
-emailList = []
-
-with open('emailList.txt') as file:
-    for line in file:
-        emailList.append(line.rstrip())
-        
-print(emailList)
-
 # %%
 
 
