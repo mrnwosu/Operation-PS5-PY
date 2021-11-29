@@ -245,6 +245,7 @@ def checkAndAddArguments(options):
         if arg.startswith('--'):
             log.info(f'Adding following argument :=> {arg}')
             options.add_argument(arg)
+    options.add_argument('--disable-blink-features=AutomationControlled')
     return options
 
 def getOptions():
@@ -390,6 +391,9 @@ def doWork_Single(searchInfos):
             
             runCounter += 1
             WebDriverWait(driver, 30, poll_frequency=30, ignored_exceptions=None)
+            
+            # if runCounter % 20 == 0:
+                # recycleDriver(driver)
 
         except KeyboardInterrupt:
             log.Error('Stop Called')
@@ -502,9 +506,9 @@ def fillContactInfo(driver):
 def selectCard(driver):
     log.warning('Selecting Card')
     findElemByIdAndSendKeys(driver,'optimized-cc-card-number',info['card_number'])
-    time.sleep(2)
+    time.sleep(1)
     findElemBySelectorAndClick(driver, 'section[class*="credit-card-form"] > div:nth-child(3) > div > div > button')
-    time.sleep(2)
+    time.sleep(1)
     try:
         findElemBySelectorAndClick(driver, 'label[class="reward-calculator__label"]')
     except:
@@ -513,6 +517,9 @@ def selectCard(driver):
 def clickButtonForPaymentInformation(driver):
     log.warning('Continuing to payment information.')
     findElemBySelectorAndClick(driver,'div[class="button--continue"] > button') 
+
+def clickButtonForShippingInstead(driver):
+    findElemBySelectorAndClick(driver, 'div[class="streamlined__switch"] > a')
 
 def purchaseSuccessfull(driver) -> bool:
     log.warning('Checking if purchase was succesfull')
@@ -550,6 +557,7 @@ def getRandomWait(start: int, finish: int) -> int:
 
 def consolidatedFill(driver):
     log.warning('Running Consolidated Flow')
+    clickButtonForShippingInstead(driver)
     fillAddress(driver)
     fillContactInfo(driver)
     clickButtonForPaymentInformation(driver)
@@ -558,10 +566,11 @@ def consolidatedFill(driver):
 
 def normalFill(driver):
     log.warning('Running Normal Flow')
+    clickButtonForShippingInstead(driver)
+    fillAddress(driver)
     fillContactInfo(driver)
     clickButtonForPaymentInformation(driver)
     selectCard(driver)
-    fillAddress(driver)
     return makePurchase(driver)
 
 def runScriptNoError(driver, script):
@@ -634,8 +643,7 @@ info = json.loads(os.environ.get('G_INFO'))
 searchInfos = getProductDicts()
 doWork_Single(searchInfos)
 
-# %%
-# url = 'https://www.bestbuy.com/site/promo/savings-select-windows-laptops'
+# url = 'https://www.bestbuy.com/site/promo/cyber-monday-laptop-computer-deals-1?qp=systemmemoryram_facet%3DRAM~16%20gigabytes'
 # driver = webdriver.Chrome(executable_path=DRIVER_FILE_PATH)
 # driver.get(url)
 # soup = bs(driver.page_source,'html.parser')
