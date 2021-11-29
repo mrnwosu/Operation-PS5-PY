@@ -391,9 +391,6 @@ def doWork_Single(searchInfos):
             
             runCounter += 1
             WebDriverWait(driver, 30, poll_frequency=30, ignored_exceptions=None)
-            
-            # if runCounter % 20 == 0:
-                # recycleDriver(driver)
 
         except KeyboardInterrupt:
             log.Error('Stop Called')
