@@ -12,8 +12,6 @@ from bs4 import BeautifulSoup as bs
 
 from datetime import timedelta
 import time
-import threading 
-import _thread as thread
 
 import random
 import json
@@ -335,36 +333,6 @@ def runScrapForSearchUrl(storeInfoDict):
     recycleDriver(storeInfoDict['driver'])
     log.info(f'Exiting Thread for {storeInfoDict["product"]}')
 
-
-# %%
-#Worker functions
-def doWork_Threads(searchInfos):
-    threads = []
-    for info in searchInfos:
-        info['stop'] = False
-        product = info['product']
-        store = info['store']
-
-        log.info(f'Getting driver for {product} => {store}')
-        info['driver'] = getDriver()
-        log.info(f'Starting thread for {product} => {store}')
-        thread = threading.Thread(target=runScrapForSearchUrl, args=(info,))
-        threads.append(thread)
-        thread.start()
-
-    while True:
-        try:
-            log.info('Things are going well..')
-            time.sleep(5)
-        except KeyboardInterrupt:
-            for info in searchInfos:
-                info['stop'] = True
-            break
-
-    for t in threads:
-        t.join()
-
-
 def doWork_Single(searchInfos):
     runCounter = 0
     driver = getDriver()
@@ -404,7 +372,7 @@ def doWork_Single(searchInfos):
 
 
 # %%
-def getElemSelector(driver, cssSelector):
+def getElemBySelector(driver, cssSelector):
     try:
         return WebDriverWait(driver, 10).until(
             EC.presence_of_element_located((By.CSS_SELECTOR, cssSelector))
@@ -412,7 +380,7 @@ def getElemSelector(driver, cssSelector):
     except:
         return None 
 
-def getElemId(driver, id):
+def getElemById(driver, id):
     try:
         return WebDriverWait(driver, 10).until(
             EC.presence_of_element_located((By.ID, id))
@@ -421,29 +389,29 @@ def getElemId(driver, id):
         return None 
     
 def findElemBySelectorAndClick(driver, cssSelector):
-    elem = getElemSelector(driver, cssSelector)
+    elem = getElemBySelector(driver, cssSelector)
     elem.click()
     
 def findElemByIdAndClick(driver, id):
-    elem = getElemId(driver, id)
+    elem = getElemById(driver, id)
     elem.click()
     
 def findElemBySelectorAndSendKeys(driver, cssSelector, text):
-    elem = getElemSelector(driver, cssSelector)
+    elem = getElemBySelector(driver, cssSelector)
     elem.clear()
     elem.send_keys(text)
     
 def findElemByIdAndSendKeys(driver, id, text):
-    elem = getElemId(driver, id)
+    elem = getElemById(driver, id)
     elem.send_keys(text)
     
 def findSelectByIdAndSelect(driver,id,option):
-    elem = getElemId(driver, id)
+    elem = getElemById(driver, id)
     select = Select(elem)
     select.select_by_visible_text(option)
     
 def findSelectBySelectorAndSelect(driver,cssSelector,option):
-    elem = getElemSelector(driver, cssSelector)
+    elem = getElemBySelector(driver, cssSelector)
     select = Select(elem)
     select.select_by_visible_text(option)
     
@@ -640,7 +608,7 @@ info = json.loads(os.environ.get('G_INFO'))
 searchInfos = getProductDicts()
 doWork_Single(searchInfos)
 
-# url = 'https://www.bestbuy.com/site/promo/cyber-monday-laptop-computer-deals-1?qp=systemmemoryram_facet%3DRAM~16%20gigabytes'
+# url = 'https://www.bestbuy.com/site/tvs/75-inch-tvs/pcmcat1514910595284.c?id=pcmcat1514910595284'
 # driver = webdriver.Chrome(executable_path=DRIVER_FILE_PATH)
 # driver.get(url)
 # soup = bs(driver.page_source,'html.parser')
@@ -650,7 +618,7 @@ doWork_Single(searchInfos)
 # listingInQuestion = parsedListings[0]
 
 # makeMoney(firstListingSoup, driver, listingInQuestion)
-# %%
+# # %%
 
 
 

@@ -7,7 +7,7 @@
             "request": "launch",
             "program": "${file}",
             "console": "integratedTerminal",
-            "cwd": "C:\\Users\\inwosu\\Projects\\Operation-PS5",
+            "cwd": "C:\\Users\\adiz_\\Projects\\Operation-PS5",
             "args": ["-chrome"]
         }
     ]
