@@ -1,4 +1,3 @@
-# %%
 from selenium import webdriver
 from selenium.webdriver.firefox.options import Options as FirefoxOptions
 from selenium.webdriver.common.keys import Keys
@@ -12,6 +11,7 @@ from bs4 import BeautifulSoup as bs
 
 from datetime import timedelta
 import time
+# import _thread as thread
 
 import random
 import json

@@ -1,1 +1,5 @@
+#ignore the log files 
 *.log
+
+#ignore setting files
+*.json
